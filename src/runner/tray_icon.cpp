@@ -172,9 +172,6 @@ LRESULT __stdcall tray_icon_window_proc(HWND window, UINT message, WPARAM wparam
     case WM_CLOSE:
         DestroyWindow(window);
         break;
-    case WM_COMMAND:
-        handle_tray_command(window, wparam, lparam);
-        break;
     // Shell_NotifyIcon can fail when we invoke it during the time explorer.exe isn't present/ready to handle it.
     // We'll also never receive wm_taskbar_restart message if the first call to Shell_NotifyIcon failed, so we use
     // WM_WINDOWPOSCHANGING which is always received on explorer startup sequence.
@@ -216,7 +213,8 @@ LRESULT __stdcall tray_icon_window_proc(HWND window, UINT message, WPARAM wparam
                 POINT mouse_pointer;
                 GetCursorPos(&mouse_pointer);
                 SetForegroundWindow(window); // Needed for the context menu to disappear.
-                TrackPopupMenu(h_sub_menu, TPM_CENTERALIGN | TPM_BOTTOMALIGN, mouse_pointer.x, mouse_pointer.y, 0, window, nullptr);
+                UINT cmd = TrackPopupMenu(h_sub_menu, TPM_RETURNCMD | TPM_CENTERALIGN | TPM_BOTTOMALIGN, mouse_pointer.x, mouse_pointer.y, 0, window, nullptr);
+                handle_tray_command(window, cmd, ESettingsWindowNames::Overview);
                 break;
             }
             case WM_LBUTTONUP:
@@ -307,7 +305,6 @@ void start_tray_icon()
         std::wstring about_msg_pt_version = L"PowerToys " + get_product_version();
         wcscpy_s(tray_icon_data.szTip, sizeof(tray_icon_data.szTip) / sizeof(WCHAR), about_msg_pt_version.c_str());
         tray_icon_data.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-        ChangeWindowMessageFilterEx(hwnd, WM_COMMAND, MSGFLT_ALLOW, nullptr);
 
         tray_icon_created = Shell_NotifyIcon(NIM_ADD, &tray_icon_data) == TRUE;
     }
