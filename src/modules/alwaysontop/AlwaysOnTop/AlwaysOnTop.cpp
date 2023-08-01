@@ -162,10 +162,13 @@ LRESULT AlwaysOnTop::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lp
 
 void AlwaysOnTop::ProcessCommand(HWND window)
 {
-    bool gameMode = detect_game_mode();
-    if (AlwaysOnTopSettings::settings().blockInGameMode && gameMode)
+    if (AlwaysOnTopSettings::settings().blockInGameMode)
     {
-        return;
+        bool gameMode = detect_game_mode();
+        if (gameMode)
+        {
+            return;
+        }
     }
 
     if (isExcluded(window))
